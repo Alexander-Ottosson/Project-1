@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <title>Request - {{request.employee_f_name}} {{request.employee_l_name}}</title>
+  </head>
+  <body>
+    <!-- <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav">
+                  <li class="nav-item">
+                      <a href="D:\Documents\Work Related Documents\Training Projects\Major Projects\project_1\front_end\view_requests.html" class="nav-link">View Requests</a>
+                  </li>
+                  <li class="nav-item">
+                      <a href="D:\Documents\Work Related Documents\Training Projects\Major Projects\project_1\front_end\create_request.html" class="nav-link">Create a Request</a>
+                  </li>
+              </ul>
+          </div>
+      </div>
+    </nav> -->
+  <main class="container">
+    <h1>Request Info</h1>
+    <table>
+      <tbody>
+        <tr>
+          <td class="text-end pe-2"><strong>Employee:</strong></td>
+          <td>{{request.employee_f_name}} {{request.employee_l_name}}</td>
+        </tr>
+
+        <tr>
+          <td class="text-end pe-2"><strong>Justification:</strong></td>
+          <td>{{request.justification}}</td>
+        </tr>
+
+        <tr>
+          <td class="text-end pe-2"><strong>Event Name:</strong></td>
+          <td>{{request.event_name}} - {{request.event_type_name}}</td>
+        </tr>
+
+        <tr>
+          <td class="text-end pe-2"><strong>Event Description:</strong></td>
+          <td>{{request.event_description}}</td>
+        </tr>
+
+        <tr>
+          <td class="text-end pe-2"><strong>Event Cost:</strong></td>
+          <td>{{"${:,.2f}".format(request.event_cost)}}</td>
+        </tr>
+
+        <tr>
+          <td class="text-end pe-2"><strong>Reimbursement Amount:</strong></td>
+          <td>
+            {{"${:,.2f}".format(request.reimbursement_amount)}}
+
+            {% if user.is_benco %}
+            <button onclick="alterAmount()" class="btn btn-sm btn-secondary">Alter Amount</button>
+            {% endif %}
+          </td>
+        </tr>
+
+        {% if request.grade_type %}
+        <tr>
+          <td class="text-end pe-2"><strong>Grade Type</strong></td>
+          <td>{{request.grade_type}}</td>
+        </tr>
+        {% endif %}
+
+        <tr>
+          <td class="text-end pe-2"><strong>Location:</strong></td>
+          <td>
+            <p class="m-0">{{request.street}}</p>
+            <p class="m-0">{{request.city}}</p>
+            <p class="m-0">{{request.state}}, {{request.zip_code}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="text-end pe-2"><strong>Event Date:</strong></td>
+          <td id="event-date">
+            {{request.event_start_date}}
+            {% if request.event_end_date and request.event_end_date != request.event_start_date %}
+            - {{request.event_end_date}}
+            {% endif %}
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="text-end pe-2"><strong>Missed Work:</strong></td>
+          <td>
+            {{request.missed_work_start}}
+            {% if request.missed_work_end and request.missed_work_end != request.missed_work_start %}
+            - {{request.missed_work_end}}
+            {% endif %}
+          </td>
+        </tr>
+
+        <tr>
+          <td class="text-end pe-2"><strong>Approvals:</strong></td>
+          <td>
+            {% if request.approvals %}
+              <ul class="list-group">
+
+                {% for approval in request.approvals %}
+                <li class="list-group-item">
+
+                {% if approval.approved %}
+                
+                <span class="badge bg-success">
+                  Approved: {{approval.approver_f_name}} {{approval.approver_l_name}} -
+                
+                  {% else %}
+                
+                  <span class="badge bg-danger">
+                  Denied: {{approval.approver_f_name}} {{approval.approver_l_name}} - 
+                
+                  {% endif %}
+                
+                {% if approval.appr_type_id == 1 %}
+                Supervisor
+                {% elif approval.appr_type_id == 2 %}
+                Department Head
+                {% else %}
+                Benefits Coordinator
+                {% endif %}
+                </span>
+
+                {% if approval.reason %}
+                <span>- {{approval.reason}}</span>
+                {% endif %}
+
+                </li>
+                {% endfor %}
+
+              </ul>
+            {% else %}
+
+            {% endif %}
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+    {% if user.is_benco or user.is_dept_head or request.employee_id in user.subordinate_ids %}
+    <button onclick="approveRequest()" class="btn btn-success">Approve</button>
+    <button onclick="denyRequest()" class="btn btn-danger">Deny</button>
+    {% endif %}
+  </main>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+    {% if user.is_benco or user.is_dept_head or request.employee_id in user.subordinate_ids %}
+    <script>
+      function approveRequest() {
+        submitApproval(true, '')
+      }
+
+      function denyRequest() {
+        reason = prompt('Why are you denying this request?')
+        submitApproval(false, reason)
+      }
+
+      async function submitApproval(approved, reason) {
+        const url = 'http://localhost:5000/approvals/create-or-update/{{request.request_id}}';
+
+        data = {
+          "approved": approved,
+          "reason": reason
+        };
+
+        const httpResponse = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const status = await httpResponse.status;
+        if (status == 200) {
+          location.reload();
+        } else {
+          alert('Could not approve/deny request')
+        }
+      }
+    </script>
+    {% endif %}
+
+    {% if user.is_benco %}
+    <script>
+      async function alterAmount() {
+        amount = parseFloat(prompt('New Amount: '));
+
+        if (isNaN(amount)) {
+          alert('Invalid Amount')
+        } else {
+          url = 'http://localhost:5000//requests/update-amount/{{request.request_id}}'
+          
+          data = {
+            'amount': amount
+          }
+
+          const httpResponse = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          })
+
+          const status = await httpResponse.status
+          if (status == 200) {
+            location.reload();
+          } else {
+            alert('Could not alter amount')
+          }
+        }
+      }
+    </script>
+    {% endif %}
+  </body>
+</html>

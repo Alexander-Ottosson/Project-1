@@ -1,0 +1,18 @@
+project 1 notes
+
+user logs in:
+
+User can create a reimbursement request
+User can see what request they have made, and the approval status for supervisor, dept head, benefits coordinator
+
+If the user is a supervisor to one or more employees:
+	- allow user to see requests made by subordinates they need to approve or deny, urgent ones first
+
+If the user is adepartment head:
+	- allow user to see requests made by all employees in the department
+	- if the request they approved was from a direct subordinate does both supervisor and head approval/denial
+
+If the user is BenCo:
+	- allow user to see all requests made by all employees
+	- if the user is also a department head approve/denying the request completes both benco and head approval
+	- if the user is also someone's supervisor, approve/denying a request completes benco and supervisor approval
